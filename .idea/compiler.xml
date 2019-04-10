@@ -9,5 +9,8 @@
         <module name="szakdolgozat" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="szakdolgozat" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>
