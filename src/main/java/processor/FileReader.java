@@ -12,10 +12,12 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -42,12 +44,30 @@ public class FileReader {
             for ( Map.Entry<String, Integer> actual : csvParser.getHeaderMap().entrySet() ) {
 
                 if ( !"DATE".equals(actual.getKey()) ) {
-                    data.getData().get(key).add(Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey()))).build());
+                    if(csvRecord.getRecordNumber()==1) {
+                        data.getData().get(key).add(Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey()))).yield(BigDecimal.ONE).build());
+
+                    }else{
+                        List<Share> prevShares = getElementByIndex(data.getData(),(int)csvRecord.getRecordNumber()-2);
+                        BigDecimal prevPrice = prevShares.get(actual.getValue()-1).getPrice();
+                        Share actualShare = Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey()))).build();
+                        actualShare.setYield(actualShare.getPrice().divide(prevPrice,4, RoundingMode.HALF_UP).add(new BigDecimal(-1)));
+                        data.getData().get(key).add(actualShare);
+
+
+                    }
+
+
                 }
             }
         }
 
         return data;
+    }
+
+    private List<Share> getElementByIndex (Map<LocalDate,List<Share>> map, int index){
+        return map.get((map.keySet().toArray())[index]);
+
     }
 
 }
