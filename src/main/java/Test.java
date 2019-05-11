@@ -1,40 +1,49 @@
-import lombok.Getter;
 import model.FileData;
-import model.Share;
 import model.SplitData;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import processor.DataSplitter;
 import processor.FileReader;
+import strategies.MaxEV;
+import strategies.MinVarMaxEV;
+import strategies.MinimumVariance;
+import strategies.UniformWeight;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 public class Test {
 
-      public static void main( String[] args ) throws IOException {
+    public static void main( final String[] args ) throws Exception {
+        PropertyConfigurator.configure("src/resources/log4j.properties");
+        final Logger log = LogManager.getLogger(Test.class);
 
-
-        FileReader reader = new FileReader("I:\\SP500_weekly_2003_2008.csv");
+        final FileReader reader = new FileReader("C:\\SP500_weekly_2003_2008.csv");
 
         final FileData data = reader.read();
 
-        StringBuilder sb = new StringBuilder();
-        for(Map.Entry<String, SplitData> sumOfReturn : DataSplitter.sumOfReturns(data.getData(),new BigDecimal(40)).entrySet()){
+        final StringBuilder sb = new StringBuilder();
+
+        final Map<String, SplitData> trainingData = DataSplitter.sumOfReturns(data.getData(), new BigDecimal(40));
+
+        for ( final Map.Entry<String, SplitData> sumOfReturn : trainingData.entrySet() ) {
             sb.append(sumOfReturn.getKey()).append(":").append(sumOfReturn.getValue().getSumOfYield()).append("|");
-
         }
-          System.out.println(sb.toString());
 
+        log.info(sb.toString());
 
-      /*for ( Map.Entry<LocalDate, List<Share>> shares : data.getData().entrySet() ) {
-          StringBuilder sb2= new StringBuilder(shares.getKey()+" ");
-            for ( Share share : shares.getValue() ) {
-                sb2.append(share.getName() + "|" + share.getYield() + ",");
-            }
-          System.out.println(sb2.toString());
-        }*/
+        final UniformWeight uniform = new UniformWeight(data.getData().get(data.getData().keySet().toArray()[1]));
+        final MaxEV maxev = new MaxEV(trainingData);
+        final MinimumVariance minvar =
+            new MinimumVariance(DataSplitter.trainingData(data.getData(), new BigDecimal(40)));
+        final MinVarMaxEV minvarev =
+            new MinVarMaxEV(DataSplitter.trainingData(data.getData(), new BigDecimal(40)), trainingData, 0);
+
+        uniform.optimize(trainingData, uniform.getWeights(), "uniform");
+        maxev.optimize(trainingData, maxev.getWeights(), "maxev");
+        minvar.optimize(trainingData, minvar.getWeights(), "minvar");
+        minvarev.optimize(trainingData, minvarev.getWeights(), "minvarev");
 
     }
 

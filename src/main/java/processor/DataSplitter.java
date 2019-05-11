@@ -32,7 +32,7 @@ public class DataSplitter {
         return retVal;
     }
 
-    private static Map<LocalDate, List<Share>> trainingData(Map<LocalDate, List<Share>> allShares, BigDecimal ratio) {
+    public static Map<LocalDate, List<Share>> trainingData(Map<LocalDate, List<Share>> allShares, BigDecimal ratio) {
 
         final Map<LocalDate, List<Share>> retVal = new LinkedHashMap<>();
         final int trainingDataNum = ratio.divide(new BigDecimal(100), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(allShares.size())).setScale(0, RoundingMode.HALF_UP).intValue();
