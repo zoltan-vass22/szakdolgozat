@@ -3,6 +3,7 @@ package utils;
 import com.joptimizer.functions.ConvexMultivariateRealFunction;
 import com.joptimizer.functions.LinearMultivariateRealFunction;
 import model.Share;
+import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 
@@ -33,9 +34,8 @@ public final class VarianceHelper {
         return retval;
     }
 
-    public static double[][] getMatrixFromTrainingData( final Map<LocalDate, List<Share>> trainingData ) {
-        final double[][] retval =
-            new double[trainingData.size()][trainingData.get(trainingData.keySet().toArray()[1]).size()];
+    public static double[][] getMatrixFromTrainingData( final LinkedMap<LocalDate, List<Share>> trainingData ) {
+        final double[][] retval = new double[trainingData.size()][trainingData.getValue(1).size()];
 
         int i = 0;
         int j = 0;

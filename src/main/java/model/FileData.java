@@ -3,21 +3,18 @@ package model;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.collections4.map.LinkedMap;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-@Getter
-@Setter
-public class FileData {
+@Getter @Setter public class FileData {
 
-    private Map<LocalDate, List<Share>> data;
+    private LinkedMap<LocalDate, List<Share>> data;
 
     public FileData() {
-        data = new LinkedHashMap<>();
+        data = new LinkedMap<>();
     }
 
     public void createListOfShare( final LocalDate date ) {

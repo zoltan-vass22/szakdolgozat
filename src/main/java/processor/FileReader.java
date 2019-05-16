@@ -20,38 +20,41 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-@Getter
-@AllArgsConstructor
-@Setter
-public class FileReader {
+@Getter @AllArgsConstructor @Setter public class FileReader {
 
     private String filePath;
 
     public FileData read() throws IOException {
         final FileData data = new FileData();
 
-        Reader reader = Files.newBufferedReader(Paths.get(filePath));
-        CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());
+        final Reader reader = Files.newBufferedReader(Paths.get(filePath));
+        final CSVParser csvParser =
+            new CSVParser(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim());
 
-        for ( CSVRecord csvRecord : csvParser.getRecords() ) {
+        for ( final CSVRecord csvRecord : csvParser.getRecords() ) {
 
-            LocalDate key = LocalDate.parse(csvRecord.get("DATE"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            final LocalDate key = LocalDate.parse(csvRecord.get("DATE"), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
             if ( data.getData().get(key) == null ) {
                 data.createListOfShare(key);
             }
 
-            for ( Map.Entry<String, Integer> actual : csvParser.getHeaderMap().entrySet() ) {
+            for ( final Map.Entry<String, Integer> actual : csvParser.getHeaderMap().entrySet() ) {
 
                 if ( !"DATE".equals(actual.getKey()) ) {
-                    if(csvRecord.getRecordNumber()==1) {
-                        data.getData().get(key).add(Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey()))).yield(BigDecimal.ONE).build());
+                    if ( csvRecord.getRecordNumber() == 1 ) {
+                        data.getData().get(key).add(
+                            Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey())))
+                                .yield(BigDecimal.ONE).build());
 
-                    }else{
-                        List<Share> prevShares = getElementByIndex(data.getData(),(int)csvRecord.getRecordNumber()-2);
-                        BigDecimal prevPrice = prevShares.get(actual.getValue()-1).getPrice();
-                        Share actualShare = Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey()))).build();
-                        actualShare.setYield(actualShare.getPrice().divide(prevPrice,4, RoundingMode.HALF_UP).add(new BigDecimal(-1)));
+                    } else {
+                        final List<Share> prevShares = data.getData().getValue((int) csvRecord.getRecordNumber() - 2);
+                        final BigDecimal prevPrice = prevShares.get(actual.getValue() - 1).getPrice();
+                        final Share actualShare =
+                            Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey())))
+                                .build();
+                        actualShare.setYield(
+                            actualShare.getPrice().divide(prevPrice, 4, RoundingMode.HALF_UP).add(new BigDecimal(-1)));
                         data.getData().get(key).add(actualShare);
 
 
@@ -65,9 +68,5 @@ public class FileReader {
         return data;
     }
 
-    private List<Share> getElementByIndex (Map<LocalDate,List<Share>> map, int index){
-        return map.get((map.keySet().toArray())[index]);
-
-    }
 
 }

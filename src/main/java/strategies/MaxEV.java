@@ -1,32 +1,36 @@
 package strategies;
 
-import model.SplitData;
+import model.ShareYield;
+import org.apache.commons.collections4.map.LinkedMap;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 public class MaxEV extends AbstractStrategy {
+    private static final String NAME = "MaxEv";
+    private final LinkedMap<String, BigDecimal> weights;
 
-    private final Map<String, BigDecimal> weights;
-
-    public MaxEV( final Map<String, SplitData> shares ) {
+    public MaxEV( final LinkedMap<String, ShareYield> shares ) {
         weights = calculateWeight(shares);
     }
 
-    private Map<String, BigDecimal> calculateWeight( final Map<String, SplitData> shares ) {
-        final Map<String, BigDecimal> retval = new LinkedHashMap<>();
+    private LinkedMap<String, BigDecimal> calculateWeight( final LinkedMap<String, ShareYield> shares ) {
+        final LinkedMap<String, BigDecimal> retval = new LinkedMap<>();
         shares.entrySet().forEach(actual -> retval.put(actual.getValue().getName(), BigDecimal.ZERO));
 
-        final Optional<Map.Entry<String, SplitData>> maxentry = shares.entrySet().stream()
-            .max(Comparator.comparing(( Map.Entry<String, SplitData> e ) -> e.getValue().getSumOfYield()));
+        final Optional<Map.Entry<String, ShareYield>> maxentry = shares.entrySet().stream()
+            .max(Comparator.comparing(( Map.Entry<String, ShareYield> e ) -> e.getValue().getSumOfYield()));
         retval.put(maxentry.get().getKey(), BigDecimal.ONE);
         return retval;
     }
 
-    public Map<String, BigDecimal> getWeights() {
+    @Override public LinkedMap<String, BigDecimal> getWeights() {
         return weights;
+    }
+
+    @Override public String getName() {
+        return NAME;
     }
 }

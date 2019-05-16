@@ -9,6 +9,7 @@ import com.joptimizer.optimizers.JOptimizer;
 import com.joptimizer.optimizers.OptimizationRequest;
 import com.joptimizer.optimizers.OptimizationResponse;
 import model.Share;
+import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -16,22 +17,21 @@ import utils.VarianceHelper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MinimumVariance extends AbstractStrategy {
-
+    private static final String NAME = "MinimumVariance";
     private final DoubleFactory2D f2 = DoubleFactory2D.dense;
-    private final Map<String, BigDecimal> weights;
+    private final LinkedMap<String, BigDecimal> weights;
 
-    public MinimumVariance( final Map<LocalDate, List<Share>> trainingData ) throws Exception {
+    public MinimumVariance( final LinkedMap<LocalDate, List<Share>> trainingData ) throws Exception {
         weights = calculateWeight(trainingData);
     }
 
-    private Map<String, BigDecimal> calculateWeight( final Map<LocalDate, List<Share>> trainingData )
+    private LinkedMap<String, BigDecimal> calculateWeight( final LinkedMap<LocalDate, List<Share>> trainingData )
         throws JOptimizerException {
-        final Map<String, BigDecimal> retval = new LinkedHashMap<>();
+        final LinkedMap<String, BigDecimal> retval = new LinkedMap<>();
 
         final RealMatrix covMatrix =
             new Covariance(MatrixUtils.createRealMatrix(VarianceHelper.getMatrixFromTrainingData(trainingData)))
@@ -76,7 +76,11 @@ public class MinimumVariance extends AbstractStrategy {
         return retval;
     }
 
-    public Map<String, BigDecimal> getWeights() {
+    @Override public LinkedMap<String, BigDecimal> getWeights() {
         return weights;
+    }
+
+    @Override public String getName() {
+        return NAME;
     }
 }

@@ -12,7 +12,8 @@ import com.joptimizer.optimizers.JOptimizer;
 import com.joptimizer.optimizers.OptimizationRequest;
 import com.joptimizer.optimizers.OptimizationResponse;
 import model.Share;
-import model.SplitData;
+import model.ShareYield;
+import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.correlation.Covariance;
@@ -21,25 +22,24 @@ import utils.VarianceHelper;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MinVarMaxEV extends AbstractStrategy {
-
+    private static final String NAME = "MinVarMaxEV";
     private final DoubleFactory1D f1 = DoubleFactory1D.dense;
     private final DoubleFactory2D f2 = DoubleFactory2D.dense;
-    private final Map<String, BigDecimal> weights;
+    private final LinkedMap<String, BigDecimal> weights;
 
-    public MinVarMaxEV( final Map<LocalDate, List<Share>> trainingData, final Map<String, SplitData> trainingDataYield,
-        final double lambda ) throws Exception {
+    public MinVarMaxEV( final LinkedMap<LocalDate, List<Share>> trainingData,
+        final LinkedMap<String, ShareYield> trainingDataYield, final double lambda ) throws Exception {
         weights = calculateWeight(trainingData, trainingDataYield, lambda);
     }
 
-    private final double[] calculateEV( final Map<String, SplitData> trainingDataYield ) {
+    private final double[] calculateEV( final LinkedMap<String, ShareYield> trainingDataYield ) {
         final double[] retval = new double[trainingDataYield.size()];
         int i = 0;
-        for ( final Map.Entry<String, SplitData> actual : trainingDataYield.entrySet() ) {
+        for ( final Map.Entry<String, ShareYield> actual : trainingDataYield.entrySet() ) {
             retval[i++] =
                 actual.getValue().getSumOfYield().divide(new BigDecimal(trainingDataYield.size()), RoundingMode.HALF_UP)
                     .doubleValue();
@@ -47,9 +47,9 @@ public class MinVarMaxEV extends AbstractStrategy {
         return retval;
     }
 
-    private Map<String, BigDecimal> calculateWeight( final Map<LocalDate, List<Share>> trainingData,
-        final Map<String, SplitData> trainingDataYield, final double lambda ) throws JOptimizerException {
-        final Map<String, BigDecimal> retval = new LinkedHashMap<>();
+    private LinkedMap<String, BigDecimal> calculateWeight( final LinkedMap<LocalDate, List<Share>> trainingData,
+        final LinkedMap<String, ShareYield> trainingDataYield, final double lambda ) throws JOptimizerException {
+        final LinkedMap<String, BigDecimal> retval = new LinkedMap<>();
 
         final RealMatrix covMatrix =
             new Covariance(MatrixUtils.createRealMatrix(VarianceHelper.getMatrixFromTrainingData(trainingData)))
@@ -98,7 +98,11 @@ public class MinVarMaxEV extends AbstractStrategy {
         return retval;
     }
 
-    public Map<String, BigDecimal> getWeights() {
+    @Override public LinkedMap<String, BigDecimal> getWeights() {
         return weights;
+    }
+
+    @Override public String getName() {
+        return NAME;
     }
 }
