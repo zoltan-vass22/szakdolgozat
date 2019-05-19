@@ -88,7 +88,6 @@ public class DailyReturn {
                 mapToList.put(allShares.get(i), allShares.getValue(i));
             }
 
-
             dailyPortfolioList.add(mapToList);
         }
 
@@ -99,12 +98,10 @@ public class DailyReturn {
 
         final List<RiskModel> models = new ArrayList<>();
 
-
-
-        for ( int i = 1; i < (allShares.size() - splitRatio); i++ ) {
+        for ( int i = 1; i < dailyAggregatedPortfolioList.size(); i++ ) {
             models.add(RiskModel.builder()
                 .dailyReturn(strategy.optimize(dailyAggregatedPortfolioList.get(i - 1), strategy.getWeights()))
-                .date(allShares.get(i)).build());
+                .date(allShares.get((splitRatio + i - 1))).build());
         }
         return models;
     }
