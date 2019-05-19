@@ -58,7 +58,7 @@ public class MinVarMaxEV extends AbstractStrategy {
 
         final DoubleMatrix1D qVector = f1.make(calculateEV(trainingDataYield));
         final DoubleMatrix1D q = qVector.assign(Mult.mult(-lambda));
-        final DoubleMatrix2D p = hMatrix.assign(Mult.mult((1 - lambda)));
+        final DoubleMatrix2D p = hMatrix.assign(Mult.mult((1 - lambda))).assign(Mult.mult(2));
 
         final PDQuadraticMultivariateRealFunction objectiveFunction =
             new PDQuadraticMultivariateRealFunction(p.toArray(), q.toArray(), 0);

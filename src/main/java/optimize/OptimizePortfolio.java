@@ -1,7 +1,7 @@
 package optimize;
 
-import charts.BarChart_AWT;
-import charts.LineChart_AWT;
+import charts.CumulRetChartTest;
+import charts.CumulRetChartTrain;
 import model.FileData;
 import model.RiskModel;
 import model.ShareYield;
@@ -18,7 +18,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.jfree.ui.RefineryUtilities;
-import processor.DailyYield;
+import processor.DailyReturn;
 import processor.DataSplitter;
 import processor.FileReader;
 import processor.RiskMetrics;
@@ -42,12 +42,12 @@ public class OptimizePortfolio {
         final CommandLineParser parser = new DefaultParser();
         final HelpFormatter formatter = new HelpFormatter();
         final CommandLine cmd;
-        // final String[] localArgs =
-        //    new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=40", "--strategy=MinVarMaxEV",
-        //        "--lambda=0" };
+        final String[] localArgs =
+            new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=40", "--strategy=MinVarMaxEV",
+                "--lambda=0" };
 
         try {
-            cmd = parser.parse(options, args);
+            cmd = parser.parse(options, localArgs);
 
             final String filepath = cmd.getOptionValue("path");
             final long ratio = Long.parseLong(cmd.getOptionValue("ratio"));
@@ -69,6 +69,9 @@ public class OptimizePortfolio {
 
             final LinkedMap<String, ShareYield> trainingData =
                 DataSplitter.sumOfReturns(data.getData(), new BigDecimal(ratio));
+
+            final LinkedMap<String, ShareYield> testData =
+                DataSplitter.sumOfReturnsTest(data.getData(), new BigDecimal(ratio));
 
             final AbstractStrategy strategyToUse;
 
@@ -96,25 +99,46 @@ public class OptimizePortfolio {
             strategyToUse.optimize(trainingData, strategyToUse.getWeights());
 
             final TrainingTest trainingTest = RiskMetrics
-                .standardDeviation(DailyYield.calculateDailyYield(data.getData(), strategyToUse),
+                .standardDeviation(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
                     new BigDecimal(ratio));
             RiskMetrics
-                .valueAtRisk(DailyYield.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(ratio));
-            RiskMetrics.conditionalValueAtRisk(DailyYield.calculateDailyYield(data.getData(), strategyToUse),
+                .valueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(ratio));
+            RiskMetrics.conditionalValueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
                 new BigDecimal(ratio));
             final List<RiskModel> cdfReturns =
-                RiskMetrics.cdf(DailyYield.calculateDailyYield(data.getData(), strategyToUse));
+                RiskMetrics.cdf(DailyReturn.calculateDailyYield(data.getData(), strategyToUse));
 
-            final BarChart_AWT chart =
+            final List<RiskModel> cumulRetTraining =
+                DailyReturn.calculateDailyYieldTraining(data.getData(), strategyToUse, new BigDecimal(ratio));
+
+            final List<RiskModel> cumulRetTest =
+                DailyReturn.calculateDailyYieldTest(data.getData(), strategyToUse, new BigDecimal(ratio));
+
+
+         /*   final BarChart_AWT chart =
                 new BarChart_AWT("szoras", "szoras", trainingTest.getTrainingStdDev(), trainingTest.getTestStdDev());
             chart.pack();
             RefineryUtilities.centerFrameOnScreen(chart);
-            chart.setVisible(true);
+            chart.setVisible(true); */
 
-            final LineChart_AWT linechart = new LineChart_AWT("szoras", cdfReturns);
+          /*  final LineChart_AWT linechart = new LineChart_AWT("CDF", cdfReturns);
             linechart.pack();
             RefineryUtilities.centerFrameOnScreen(linechart);
-            linechart.setVisible(true);
+            linechart.setVisible(true); */
+
+            final CumulRetChartTrain cumulativechart =
+                new CumulRetChartTrain("Cumul ret train", cumulRetTraining, new BigDecimal(ratio));
+            cumulativechart.pack();
+            RefineryUtilities.centerFrameOnScreen(cumulativechart);
+            cumulativechart.setVisible(true);
+
+
+            final CumulRetChartTest cumulativechart2 =
+                new CumulRetChartTest("Cumul ret test", cumulRetTest, new BigDecimal(ratio));
+            cumulativechart2.pack();
+            RefineryUtilities.centerFrameOnScreen(cumulativechart2);
+            cumulativechart2.setVisible(true);
+
 
 
         } catch (final ParseException e) {
