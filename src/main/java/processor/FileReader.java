@@ -20,7 +20,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-@Getter @AllArgsConstructor @Setter public class FileReader {
+@Getter
+@AllArgsConstructor
+@Setter
+public class FileReader {
 
     private String filePath;
 
@@ -54,7 +57,8 @@ import java.util.Map;
                             Share.builder().name(actual.getKey()).price(new BigDecimal(csvRecord.get(actual.getKey())))
                                 .build();
                         actualShare.setYield(
-                            actualShare.getPrice().divide(prevPrice, 4, RoundingMode.HALF_UP).add(new BigDecimal(-1)));
+                            actualShare.getPrice().divide(prevPrice, 4, RoundingMode.HALF_UP).add(new BigDecimal(-1))
+                                .setScale(4, RoundingMode.HALF_UP));
                         data.getData().get(key).add(actualShare);
 
 

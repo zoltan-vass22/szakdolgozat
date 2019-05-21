@@ -6,8 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,8 +14,6 @@ import java.time.LocalDate;
 @Builder
 @ToString
 public class RiskModel {
-    private BigDecimal dailyReturn;
-    private LocalDate date;
-    private BigDecimal centralDistribution;
-
+    private List<RiskModelListItem> training;
+    private List<RiskModelListItem> test;
 }

@@ -1,9 +1,12 @@
 package processor;
 
 import model.RiskModel;
+import model.RiskModelListItem;
 import model.Share;
 import model.ShareYield;
 import org.apache.commons.collections4.map.LinkedMap;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import strategies.AbstractStrategy;
 
 import java.math.BigDecimal;
@@ -13,97 +16,84 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DailyReturn {
+    private static final Logger log = LogManager.getLogger(DailyReturn.class);
 
-    public static List<RiskModel> calculateDailyYield( final LinkedMap<LocalDate, List<Share>> allShares,
-        final AbstractStrategy strategy ) {
-
-        final List<LinkedMap<LocalDate, List<Share>>> dailyPortfolioList = new ArrayList<>();
-
-        for ( int i = 1; i < allShares.size(); i++ ) {
-            final LinkedMap<LocalDate, List<Share>> mapToList = new LinkedMap<>();
-            for ( int j = 0; j <= i; j++ ) {
-                mapToList.put(allShares.get(j), allShares.getValue(j));
-            }
-            dailyPortfolioList.add(mapToList);
-        }
-
-        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioList = new ArrayList<>();
-
-        dailyPortfolioList.forEach(actualMap -> dailyAggregatedPortfolioList.add(DataSplitter.sumOfReturns(actualMap)));
-
-        final List<RiskModel> models = new ArrayList<>();
-
-        for ( int i = 1; i < allShares.size(); i++ ) {
-            models.add(RiskModel.builder()
-                .dailyReturn(strategy.optimize(dailyAggregatedPortfolioList.get(i - 1), strategy.getWeights()))
-                .date(allShares.get(i)).build());
-        }
-        return models;
+    public static LinkedMap<LocalDate, BigDecimal> calculateDailyYield(
+        final LinkedMap<LocalDate, List<Share>> allShares, final AbstractStrategy strategy ) {
+        return strategy.optimizeDaily(allShares, strategy.getWeights());
     }
 
-    public static List<RiskModel> calculateDailyYieldTraining( final LinkedMap<LocalDate, List<Share>> allShares,
+    public static RiskModel calculateAggregatedDailyYield( final LinkedMap<LocalDate, List<Share>> allShares,
         final AbstractStrategy strategy, final BigDecimal ratio ) {
 
-        final List<LinkedMap<LocalDate, List<Share>>> dailyPortfolioList = new ArrayList<>();
+        final LinkedMap<LocalDate, List<Share>> firstPart = new LinkedMap<>();
+        final LinkedMap<LocalDate, List<Share>> secondPart = new LinkedMap<>();
 
-        for ( int i = 1; i < allShares.size(); i++ ) {
+        split(allShares, ratio, firstPart, secondPart);
+
+        final List<LinkedMap<LocalDate, List<Share>>> dailyPortfolioListFirst = new ArrayList<>();
+        final List<LinkedMap<LocalDate, List<Share>>> dailyPortfolioListSecond = new ArrayList<>();
+
+        for ( int i = 1; i < firstPart.size(); i++ ) {
             final LinkedMap<LocalDate, List<Share>> mapToList = new LinkedMap<>();
             for ( int j = 0; j <= i; j++ ) {
-                mapToList.put(allShares.get(j), allShares.getValue(j));
+                mapToList.put(firstPart.get(j), firstPart.getValue(j));
             }
-            dailyPortfolioList.add(mapToList);
+            dailyPortfolioListFirst.add(mapToList);
         }
 
-        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioList = new ArrayList<>();
-
-        dailyPortfolioList.forEach(actualMap -> dailyAggregatedPortfolioList.add(DataSplitter.sumOfReturns(actualMap)));
-
-        final List<RiskModel> models = new ArrayList<>();
-
-        final int splitRatio =
-            ratio.divide(new BigDecimal(100), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(allShares.size()))
-                .setScale(0, RoundingMode.HALF_UP).intValue();
-
-        for ( int i = 1; i < splitRatio; i++ ) {
-            models.add(RiskModel.builder()
-                .dailyReturn(strategy.optimize(dailyAggregatedPortfolioList.get(i - 1), strategy.getWeights()))
-                .date(allShares.get(i)).build());
+        for ( int i = 1; i < secondPart.size(); i++ ) {
+            final LinkedMap<LocalDate, List<Share>> mapToList = new LinkedMap<>();
+            for ( int j = 0; j <= i; j++ ) {
+                mapToList.put(secondPart.get(j), secondPart.getValue(j));
+            }
+            dailyPortfolioListSecond.add(mapToList);
         }
-        return models;
+
+        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioListFirst = new ArrayList<>();
+        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioListSecond = new ArrayList<>();
+
+        dailyPortfolioListFirst
+            .forEach(actualMap -> dailyAggregatedPortfolioListFirst.add(DataSplitter.sumOfReturns(actualMap)));
+        dailyPortfolioListSecond
+            .forEach(actualMap -> dailyAggregatedPortfolioListSecond.add(DataSplitter.sumOfReturns(actualMap)));
+
+        final List<RiskModelListItem> modelsFirst = new ArrayList<>();
+
+        for ( int i = 1; i <= dailyAggregatedPortfolioListFirst.size(); i++ ) {
+            modelsFirst.add(RiskModelListItem.builder()
+                .dailyReturn(strategy.optimize(dailyAggregatedPortfolioListFirst.get(i - 1), strategy.getWeights()))
+                .date(firstPart.get(i)).build());
+        }
+
+        final List<RiskModelListItem> modelsSecond = new ArrayList<>();
+
+        for ( int i = 1; i <= dailyAggregatedPortfolioListSecond.size(); i++ ) {
+            modelsSecond.add(RiskModelListItem.builder().dailyReturn(
+                strategy.optimize(dailyAggregatedPortfolioListSecond.get(i - 1), strategy.getWeights())
+                    .add(BigDecimal.ONE).setScale(4, RoundingMode.HALF_UP)).date(secondPart.get(i)).build());
+        }
+
+        log.info("Training data cumulative return: " + modelsFirst.get(modelsFirst.size() - 1));
+        log.info("Test data cumulative return: " + modelsSecond.get(modelsSecond.size() - 1));
+
+        return RiskModel.builder().training(modelsFirst).test(modelsSecond).build();
     }
 
-    public static List<RiskModel> calculateDailyYieldTest( final LinkedMap<LocalDate, List<Share>> allShares,
-        final AbstractStrategy strategy, final BigDecimal ratio ) {
-
-        final List<LinkedMap<LocalDate, List<Share>>> dailyPortfolioList = new ArrayList<>();
-
+    private static void split( final LinkedMap<LocalDate, List<Share>> allshares, final BigDecimal ratio,
+        final LinkedMap<LocalDate, List<Share>> firstPart, final LinkedMap<LocalDate, List<Share>> secondPart ) {
         final int splitRatio =
-            ratio.divide(new BigDecimal(100), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(allShares.size()))
+            ratio.divide(new BigDecimal(100), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(allshares.size()))
                 .setScale(0, RoundingMode.HALF_UP).intValue();
 
-        for ( int i = splitRatio; i < allShares.size(); i++ ) {
-            final LinkedMap<LocalDate, List<Share>> mapToList = new LinkedMap<>();
-
-            for ( int j = splitRatio; j <= i; j++ ) {
-                mapToList.put(allShares.get(i), allShares.getValue(i));
+        for ( int i = 0; i < allshares.size(); i++ ) {
+            if ( i < splitRatio ) {
+                firstPart.put(allshares.get(i), allshares.getValue(i));
+            } else {
+                secondPart.put(allshares.get(i), allshares.getValue(i));
             }
-
-            dailyPortfolioList.add(mapToList);
         }
 
-        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioList = new ArrayList<>();
-
-        dailyPortfolioList
-            .forEach(actualMap -> dailyAggregatedPortfolioList.add(DataSplitter.sumOfReturnsTest(actualMap)));
-
-        final List<RiskModel> models = new ArrayList<>();
-
-        for ( int i = 1; i < dailyAggregatedPortfolioList.size(); i++ ) {
-            models.add(RiskModel.builder()
-                .dailyReturn(strategy.optimize(dailyAggregatedPortfolioList.get(i - 1), strategy.getWeights()))
-                .date(allShares.get((splitRatio + i - 1))).build());
-        }
-        return models;
     }
 
 }

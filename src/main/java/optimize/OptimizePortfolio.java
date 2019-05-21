@@ -1,7 +1,7 @@
 package optimize;
 
-import charts.CumulRetChartTest;
-import charts.CumulRetChartTrain;
+import charts.BarChart_AWT;
+import charts.LineChart_AWT;
 import model.FileData;
 import model.RiskModel;
 import model.ShareYield;
@@ -29,7 +29,6 @@ import strategies.MinimumVariance;
 import strategies.UniformWeight;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Objects;
 
 public class OptimizePortfolio {
@@ -43,8 +42,8 @@ public class OptimizePortfolio {
         final HelpFormatter formatter = new HelpFormatter();
         final CommandLine cmd;
         final String[] localArgs =
-            new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=40", "--strategy=MinVarMaxEV",
-                "--lambda=0" };
+            new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=30", "--strategy=Uniform", "--lambda=0",
+                "--alpha=5" };
 
         try {
             cmd = parser.parse(options, localArgs);
@@ -54,6 +53,7 @@ public class OptimizePortfolio {
             final String strategy = cmd.getOptionValue("strategy");
             final String lambdaAsString = cmd.getOptionValue("lambda");
             Long lambda = null;
+            final Long alpha = Long.parseLong(cmd.getOptionValue("alpha"));
 
             if ( lambdaAsString != null && lambdaAsString.length() > 0 ) {
                 lambda = Long.parseLong(cmd.getOptionValue("lambda"));
@@ -69,9 +69,6 @@ public class OptimizePortfolio {
 
             final LinkedMap<String, ShareYield> trainingData =
                 DataSplitter.sumOfReturns(data.getData(), new BigDecimal(ratio));
-
-            final LinkedMap<String, ShareYield> testData =
-                DataSplitter.sumOfReturnsTest(data.getData(), new BigDecimal(ratio));
 
             final AbstractStrategy strategyToUse;
 
@@ -95,50 +92,72 @@ public class OptimizePortfolio {
                     throw new ParseException("Strategy type not found");
             }
 
-
             strategyToUse.optimize(trainingData, strategyToUse.getWeights());
 
-            final TrainingTest trainingTest = RiskMetrics
+            final TrainingTest trainingTestStdDev = RiskMetrics
                 .standardDeviation(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
                     new BigDecimal(ratio));
-            RiskMetrics
-                .valueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(ratio));
-            RiskMetrics.conditionalValueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
-                new BigDecimal(ratio));
-            final List<RiskModel> cdfReturns =
-                RiskMetrics.cdf(DailyReturn.calculateDailyYield(data.getData(), strategyToUse));
 
-            final List<RiskModel> cumulRetTraining =
-                DailyReturn.calculateDailyYieldTraining(data.getData(), strategyToUse, new BigDecimal(ratio));
+            final TrainingTest trainingTestVaR = RiskMetrics
+                .valueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(alpha),
+                    new BigDecimal(ratio));
 
-            final List<RiskModel> cumulRetTest =
-                DailyReturn.calculateDailyYieldTest(data.getData(), strategyToUse, new BigDecimal(ratio));
+            final TrainingTest trainingTestCVaR = RiskMetrics
+                .conditionalValueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
+                    new BigDecimal(alpha), new BigDecimal(ratio));
 
+            final RiskModel cdf =
+                RiskMetrics.cdf(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(ratio));
 
-         /*   final BarChart_AWT chart =
-                new BarChart_AWT("szoras", "szoras", trainingTest.getTrainingStdDev(), trainingTest.getTestStdDev());
-            chart.pack();
-            RefineryUtilities.centerFrameOnScreen(chart);
-            chart.setVisible(true); */
+            final BarChart_AWT chartStdDev =
+                new BarChart_AWT("Standard Deviation", "Standard Deviation", trainingTestStdDev.getTraining(),
+                    trainingTestStdDev.getTest(), "Standard Deviation", "Training data", "Test Data");
+            chartStdDev.pack();
+            RefineryUtilities.centerFrameOnScreen(chartStdDev);
+            chartStdDev.setVisible(true);
 
-          /*  final LineChart_AWT linechart = new LineChart_AWT("CDF", cdfReturns);
-            linechart.pack();
-            RefineryUtilities.centerFrameOnScreen(linechart);
-            linechart.setVisible(true); */
+            final BarChart_AWT chartVaR =
+                new BarChart_AWT("VaR", "VaR", trainingTestVaR.getTraining(), trainingTestVaR.getTest(), "VaR",
+                    "Training data", "Test Data");
+            chartVaR.pack();
+            RefineryUtilities.centerFrameOnScreen(chartVaR);
+            chartVaR.setVisible(true);
 
-            final CumulRetChartTrain cumulativechart =
-                new CumulRetChartTrain("Cumul ret train", cumulRetTraining, new BigDecimal(ratio));
-            cumulativechart.pack();
-            RefineryUtilities.centerFrameOnScreen(cumulativechart);
-            cumulativechart.setVisible(true);
+            final BarChart_AWT chartCVaR =
+                new BarChart_AWT("CVaR", "CVaR", trainingTestCVaR.getTraining(), trainingTestCVaR.getTest(), "CVaR",
+                    "Training data", "Test Data");
+            chartCVaR.pack();
+            RefineryUtilities.centerFrameOnScreen(chartCVaR);
+            chartCVaR.setVisible(true);
 
+            final LineChart_AWT linechartCDFTraining =
+                new LineChart_AWT("CDF Training", cdf.getTraining(), true, "Returns", "CDF value", " CDF value");
+            linechartCDFTraining.pack();
+            RefineryUtilities.centerFrameOnScreen(linechartCDFTraining);
+            linechartCDFTraining.setVisible(true);
 
-            final CumulRetChartTest cumulativechart2 =
-                new CumulRetChartTest("Cumul ret test", cumulRetTest, new BigDecimal(ratio));
-            cumulativechart2.pack();
-            RefineryUtilities.centerFrameOnScreen(cumulativechart2);
-            cumulativechart2.setVisible(true);
+            final LineChart_AWT linechartCDFTest =
+                new LineChart_AWT("CDF Test", cdf.getTest(), true, "Returns", "CDF value", " CDF value");
+            linechartCDFTest.pack();
+            RefineryUtilities.centerFrameOnScreen(linechartCDFTest);
+            linechartCDFTest.setVisible(true);
 
+            final RiskModel rm =
+                DailyReturn.calculateAggregatedDailyYield(data.getData(), strategyToUse, new BigDecimal(ratio));
+
+            final LineChart_AWT linechartCumulRetTraining =
+                new LineChart_AWT("Cumulative Return Training", rm.getTraining(), false, "Date", "Cumulative return",
+                    "Cumulative Return");
+            linechartCumulRetTraining.pack();
+            RefineryUtilities.centerFrameOnScreen(linechartCumulRetTraining);
+            linechartCumulRetTraining.setVisible(true);
+
+            final LineChart_AWT linechartCumulRetTest =
+                new LineChart_AWT("Cumulative Return Test", rm.getTest(), false, "Date", "Cumulative return",
+                    "Cumulative Return");
+            linechartCumulRetTest.pack();
+            RefineryUtilities.centerFrameOnScreen(linechartCumulRetTest);
+            linechartCumulRetTest.setVisible(true);
 
 
         } catch (final ParseException e) {
@@ -146,8 +165,6 @@ public class OptimizePortfolio {
             formatter.printHelp("Portfolio optimizer ", options);
             System.exit(1);
         }
-
-
     }
 
     private static Options getArgParserOptions() {
@@ -167,7 +184,12 @@ public class OptimizePortfolio {
             Option.builder("l").longOpt("lambda").desc("Lambda").required(false).hasArg(true).type(Long.class)
                 .valueSeparator().build();
 
-        return new Options().addOption(filepath).addOption(ratio).addOption(strategy).addOption(lambda);
+        final Option alpha =
+            Option.builder("a").longOpt("alpha").desc("Alpha").required(true).hasArg(true).type(Long.class)
+                .valueSeparator().build();
+
+        return new Options().addOption(filepath).addOption(ratio).addOption(strategy).addOption(lambda)
+            .addOption(alpha);
     }
 
 }

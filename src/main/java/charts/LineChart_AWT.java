@@ -1,6 +1,6 @@
 package charts;
 
-import model.RiskModel;
+import model.RiskModelListItem;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -15,10 +15,11 @@ import java.util.List;
 public class LineChart_AWT extends ApplicationFrame {
     private static final long serialVersionUID = -4252913454258292505L;
 
-    public LineChart_AWT( final String title, final List<RiskModel> cdfReturns ) {
+    public LineChart_AWT( final String title, final List<RiskModelListItem> cdfReturns, final boolean isCdf,
+        final String categoryAxisLabel, final String valueAxisLabel, final String rowKey ) {
         super(title);
         final JFreeChart lineChartObject = ChartFactory
-            .createLineChart("Schools Vs Years", "Year", "Schools Count", createDataset(cdfReturns),
+            .createLineChart(title, categoryAxisLabel, valueAxisLabel, createDataset(cdfReturns, isCdf, rowKey),
                 PlotOrientation.VERTICAL, true, true, false);
 
         final ChartPanel chartPanel = new ChartPanel(lineChartObject);
@@ -26,12 +27,18 @@ public class LineChart_AWT extends ApplicationFrame {
         setContentPane(chartPanel);
     }
 
-    private CategoryDataset createDataset( final List<RiskModel> cdfReturns ) {
+    private CategoryDataset createDataset( final List<RiskModelListItem> cdfReturns, final boolean isCdf,
+        final String rowKey ) {
         final DefaultCategoryDataset line_chart_dataset = new DefaultCategoryDataset();
 
-        for ( final RiskModel actual : cdfReturns ) {
-            line_chart_dataset.addValue(actual.getCentralDistribution(), "CDF",
-                actual.getDailyReturn().setScale(4, RoundingMode.HALF_UP));
+        for ( final RiskModelListItem actual : cdfReturns ) {
+            if ( isCdf ) {
+                line_chart_dataset.addValue(actual.getCentralDistribution(), rowKey,
+                    actual.getDailyReturn().setScale(4, RoundingMode.HALF_UP));
+            } else {
+                line_chart_dataset
+                    .addValue(actual.getDailyReturn().setScale(4, RoundingMode.HALF_UP), rowKey, actual.getDate());
+            }
 
         }
         return line_chart_dataset;

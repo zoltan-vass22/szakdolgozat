@@ -7,14 +7,15 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @Builder
 @ToString
-public class TrainingTest {
-    private BigDecimal test;
-    private BigDecimal training;
-
+public class RiskModelListItem {
+    private BigDecimal dailyReturn;
+    private LocalDate date;
+    private BigDecimal centralDistribution;
 }
