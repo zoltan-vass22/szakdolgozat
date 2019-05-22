@@ -3,7 +3,7 @@ package processor;
 import model.RiskModel;
 import model.RiskModelListItem;
 import model.Share;
-import model.ShareYield;
+import model.ShareReturn;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -50,8 +50,8 @@ public class DailyReturn {
             dailyPortfolioListSecond.add(mapToList);
         }
 
-        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioListFirst = new ArrayList<>();
-        final List<LinkedMap<String, ShareYield>> dailyAggregatedPortfolioListSecond = new ArrayList<>();
+        final List<LinkedMap<String, ShareReturn>> dailyAggregatedPortfolioListFirst = new ArrayList<>();
+        final List<LinkedMap<String, ShareReturn>> dailyAggregatedPortfolioListSecond = new ArrayList<>();
 
         dailyPortfolioListFirst
             .forEach(actualMap -> dailyAggregatedPortfolioListFirst.add(DataSplitter.sumOfReturns(actualMap)));

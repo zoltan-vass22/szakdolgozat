@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder( toBuilder = true )
 @ToString
-public class ShareYield {
+public class ShareReturn {
 
     private String name;
     private BigDecimal sumOfYield;

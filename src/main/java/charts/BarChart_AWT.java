@@ -25,7 +25,7 @@ public class BarChart_AWT extends ApplicationFrame {
         final CategoryPlot plot = barChart.getCategoryPlot();
         final BarRenderer renderer = (BarRenderer) plot.getRenderer();
 
-        renderer.setSeriesPaint(0, Color.getHSBColor(0, 0, 0));
+        renderer.setSeriesPaint(0, Color.getHSBColor(0, 68, 300));
         renderer.setDrawBarOutline(false);
         renderer.setItemMargin(0);
 

@@ -1,7 +1,7 @@
 package processor;
 
 import model.Share;
-import model.ShareYield;
+import model.ShareReturn;
 import org.apache.commons.collections4.map.LinkedMap;
 
 import java.math.BigDecimal;
@@ -12,11 +12,11 @@ import java.util.Map;
 
 public class DataSplitter {
 
-    static LinkedMap<String, ShareYield> sumOfReturns( final LinkedMap<LocalDate, List<Share>> allShares ) {
+    static LinkedMap<String, ShareReturn> sumOfReturns( final LinkedMap<LocalDate, List<Share>> allShares ) {
         return sumOfReturns(allShares, null);
     }
 
-    public static LinkedMap<String, ShareYield> sumOfReturns( final LinkedMap<LocalDate, List<Share>> allShares,
+    public static LinkedMap<String, ShareReturn> sumOfReturns( final LinkedMap<LocalDate, List<Share>> allShares,
         final BigDecimal ratio ) {
 
         final LinkedMap<LocalDate, List<Share>> trainingData;
@@ -26,17 +26,17 @@ public class DataSplitter {
             trainingData = trainingData(allShares, ratio);
         }
 
-        final LinkedMap<String, ShareYield> retVal = new LinkedMap<>();
+        final LinkedMap<String, ShareReturn> retVal = new LinkedMap<>();
 
         for ( final Map.Entry<LocalDate, List<Share>> shares : trainingData.entrySet() ) {
             for ( final Share actualShare : shares.getValue() ) {
 
                 if ( !retVal.containsKey(actualShare.getName()) ) {
                     retVal.put(actualShare.getName(),
-                        ShareYield.builder().name(actualShare.getName()).sumOfYield(actualShare.getYield()).build());
+                        ShareReturn.builder().name(actualShare.getName()).sumOfYield(actualShare.getYield()).build());
 
                 } else {
-                    final ShareYield localData = retVal.get(actualShare.getName());
+                    final ShareReturn localData = retVal.get(actualShare.getName());
                     localData.setSumOfYield(
                         localData.getSumOfYield().add(actualShare.getYield()).setScale(4, RoundingMode.HALF_UP));
                     retVal.put(actualShare.getName(), localData);

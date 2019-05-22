@@ -4,7 +4,7 @@ import charts.BarChart_AWT;
 import charts.LineChart_AWT;
 import model.FileData;
 import model.RiskModel;
-import model.ShareYield;
+import model.ShareReturn;
 import model.TrainingTest;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -42,8 +42,7 @@ public class OptimizePortfolio {
         final HelpFormatter formatter = new HelpFormatter();
         final CommandLine cmd;
         final String[] localArgs =
-            new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=30", "--strategy=Uniform", "--lambda=0",
-                "--alpha=5" };
+            new String[] { "--path=C:\\data.csv", "--ratio=70", "--strategy=MinVarMaxEV", "--lambda=0.4", "--alpha=5" };
 
         try {
             cmd = parser.parse(options, localArgs);
@@ -52,11 +51,11 @@ public class OptimizePortfolio {
             final long ratio = Long.parseLong(cmd.getOptionValue("ratio"));
             final String strategy = cmd.getOptionValue("strategy");
             final String lambdaAsString = cmd.getOptionValue("lambda");
-            Long lambda = null;
+            Double lambda = null;
             final Long alpha = Long.parseLong(cmd.getOptionValue("alpha"));
 
             if ( lambdaAsString != null && lambdaAsString.length() > 0 ) {
-                lambda = Long.parseLong(cmd.getOptionValue("lambda"));
+                lambda = Double.parseDouble(lambdaAsString);
             }
 
             if ( "MinVarMaxEV".equals(strategy) && lambda == null ) {
@@ -67,7 +66,7 @@ public class OptimizePortfolio {
 
             final FileData data = reader.read();
 
-            final LinkedMap<String, ShareYield> trainingData =
+            final LinkedMap<String, ShareReturn> trainingData =
                 DataSplitter.sumOfReturns(data.getData(), new BigDecimal(ratio));
 
             final AbstractStrategy strategyToUse;

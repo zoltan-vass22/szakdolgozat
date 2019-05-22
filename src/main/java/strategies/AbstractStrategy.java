@@ -1,7 +1,7 @@
 package strategies;
 
 import model.Share;
-import model.ShareYield;
+import model.ShareReturn;
 import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -15,7 +15,7 @@ import java.util.Map;
 public abstract class AbstractStrategy {
     private final Logger log = LogManager.getLogger(AbstractStrategy.class);
 
-    public BigDecimal optimize( final Map<String, ShareYield> trainingData, final Map<String, BigDecimal> weights ) {
+    public BigDecimal optimize( final Map<String, ShareReturn> trainingData, final Map<String, BigDecimal> weights ) {
 
         BigDecimal retval = BigDecimal.ZERO;
 
@@ -45,13 +45,13 @@ public abstract class AbstractStrategy {
         return retval;
     }
 
-    private Map<String, ShareYield> transformToMap( final Map<String, BigDecimal> weights, final List<Share> shares ) {
-        final Map<String, ShareYield> retVal = new LinkedMap<>();
+    private Map<String, ShareReturn> transformToMap( final Map<String, BigDecimal> weights, final List<Share> shares ) {
+        final Map<String, ShareReturn> retVal = new LinkedMap<>();
 
         int i = 0;
         for ( final Map.Entry<String, BigDecimal> weight : weights.entrySet() ) {
             retVal.put(weight.getKey(),
-                ShareYield.builder().name(weight.getKey()).sumOfYield(shares.get(i++).getYield()).build());
+                ShareReturn.builder().name(weight.getKey()).sumOfYield(shares.get(i++).getYield()).build());
         }
 
         return retVal;
