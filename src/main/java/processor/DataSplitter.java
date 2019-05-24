@@ -33,12 +33,12 @@ public class DataSplitter {
 
                 if ( !retVal.containsKey(actualShare.getName()) ) {
                     retVal.put(actualShare.getName(),
-                        ShareReturn.builder().name(actualShare.getName()).sumOfYield(actualShare.getYield()).build());
+                        ShareReturn.builder().name(actualShare.getName()).sumOfReturn(actualShare.getYield()).build());
 
                 } else {
                     final ShareReturn localData = retVal.get(actualShare.getName());
-                    localData.setSumOfYield(
-                        localData.getSumOfYield().add(actualShare.getYield()).setScale(4, RoundingMode.HALF_UP));
+                    localData.setSumOfReturn(
+                        localData.getSumOfReturn().add(actualShare.getYield()).setScale(4, RoundingMode.HALF_UP));
                     retVal.put(actualShare.getName(), localData);
                 }
             }

@@ -21,7 +21,7 @@ public abstract class AbstractStrategy {
 
         for ( final Map.Entry<String, BigDecimal> entry : weights.entrySet() ) {
 
-            retval = retval.add(entry.getValue().multiply(trainingData.get(entry.getKey()).getSumOfYield()))
+            retval = retval.add(entry.getValue().multiply(trainingData.get(entry.getKey()).getSumOfReturn()))
                 .setScale(4, RoundingMode.HALF_UP);
 
         }
@@ -51,7 +51,7 @@ public abstract class AbstractStrategy {
         int i = 0;
         for ( final Map.Entry<String, BigDecimal> weight : weights.entrySet() ) {
             retVal.put(weight.getKey(),
-                ShareReturn.builder().name(weight.getKey()).sumOfYield(shares.get(i++).getYield()).build());
+                ShareReturn.builder().name(weight.getKey()).sumOfReturn(shares.get(i++).getYield()).build());
         }
 
         return retVal;

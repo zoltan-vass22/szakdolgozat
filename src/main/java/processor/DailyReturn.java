@@ -18,12 +18,12 @@ import java.util.List;
 public class DailyReturn {
     private static final Logger log = LogManager.getLogger(DailyReturn.class);
 
-    public static LinkedMap<LocalDate, BigDecimal> calculateDailyYield(
+    public static LinkedMap<LocalDate, BigDecimal> calculateDailyReturn(
         final LinkedMap<LocalDate, List<Share>> allShares, final AbstractStrategy strategy ) {
         return strategy.optimizeDaily(allShares, strategy.getWeights());
     }
 
-    public static RiskModel calculateAggregatedDailyYield( final LinkedMap<LocalDate, List<Share>> allShares,
+    public static RiskModel calculateAggregatedDailyReturn( final LinkedMap<LocalDate, List<Share>> allShares,
         final AbstractStrategy strategy, final BigDecimal ratio ) {
 
         final LinkedMap<LocalDate, List<Share>> firstPart = new LinkedMap<>();

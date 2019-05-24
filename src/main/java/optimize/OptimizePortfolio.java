@@ -42,7 +42,8 @@ public class OptimizePortfolio {
         final HelpFormatter formatter = new HelpFormatter();
         final CommandLine cmd;
         final String[] localArgs =
-            new String[] { "--path=C:\\data.csv", "--ratio=70", "--strategy=MinVarMaxEV", "--lambda=0.4", "--alpha=5" };
+            new String[] { "--path=C:\\SP500_weekly_2003_2008.csv", "--ratio=75", "--strategy=MinVarMaxEv",
+                "--lambda=0.5", "--alpha=5" };
 
         try {
             cmd = parser.parse(options, localArgs);
@@ -79,7 +80,7 @@ public class OptimizePortfolio {
                     strategyToUse =
                         new MinimumVariance(DataSplitter.trainingData(data.getData(), new BigDecimal(ratio)));
                     break;
-                case "MinVarMaxEV":
+                case "MinVarMaxEv":
                     strategyToUse =
                         new MinVarMaxEV(DataSplitter.trainingData(data.getData(), new BigDecimal(ratio)), trainingData,
                             Objects.requireNonNull(lambda));
@@ -94,19 +95,19 @@ public class OptimizePortfolio {
             strategyToUse.optimize(trainingData, strategyToUse.getWeights());
 
             final TrainingTest trainingTestStdDev = RiskMetrics
-                .standardDeviation(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
+                .standardDeviation(DailyReturn.calculateDailyReturn(data.getData(), strategyToUse),
                     new BigDecimal(ratio));
 
             final TrainingTest trainingTestVaR = RiskMetrics
-                .valueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(alpha),
+                .valueAtRisk(DailyReturn.calculateDailyReturn(data.getData(), strategyToUse), new BigDecimal(alpha),
                     new BigDecimal(ratio));
 
             final TrainingTest trainingTestCVaR = RiskMetrics
-                .conditionalValueAtRisk(DailyReturn.calculateDailyYield(data.getData(), strategyToUse),
+                .conditionalValueAtRisk(DailyReturn.calculateDailyReturn(data.getData(), strategyToUse),
                     new BigDecimal(alpha), new BigDecimal(ratio));
 
             final RiskModel cdf =
-                RiskMetrics.cdf(DailyReturn.calculateDailyYield(data.getData(), strategyToUse), new BigDecimal(ratio));
+                RiskMetrics.cdf(DailyReturn.calculateDailyReturn(data.getData(), strategyToUse), new BigDecimal(ratio));
 
             final BarChart_AWT chartStdDev =
                 new BarChart_AWT("Standard Deviation", "Standard Deviation", trainingTestStdDev.getTraining(),
@@ -142,7 +143,7 @@ public class OptimizePortfolio {
             linechartCDFTest.setVisible(true);
 
             final RiskModel rm =
-                DailyReturn.calculateAggregatedDailyYield(data.getData(), strategyToUse, new BigDecimal(ratio));
+                DailyReturn.calculateAggregatedDailyReturn(data.getData(), strategyToUse, new BigDecimal(ratio));
 
             final LineChart_AWT linechartCumulRetTraining =
                 new LineChart_AWT("Cumulative Return Training", rm.getTraining(), false, "Date", "Cumulative return",

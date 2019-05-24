@@ -21,7 +21,7 @@ public class MaxEV extends AbstractStrategy {
         shares.entrySet().forEach(actual -> retval.put(actual.getValue().getName(), BigDecimal.ZERO));
 
         final Optional<Map.Entry<String, ShareReturn>> maxentry = shares.entrySet().stream()
-            .max(Comparator.comparing(( Map.Entry<String, ShareReturn> e ) -> e.getValue().getSumOfYield()));
+            .max(Comparator.comparing(( Map.Entry<String, ShareReturn> e ) -> e.getValue().getSumOfReturn()));
         retval.put(maxentry.get().getKey(), BigDecimal.ONE);
         return retval;
     }

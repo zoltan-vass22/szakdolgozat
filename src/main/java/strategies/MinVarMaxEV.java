@@ -17,7 +17,7 @@ import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.correlation.Covariance;
-import utils.CovarianceHelper;
+import utils.StrategyHelper;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -32,43 +32,42 @@ public class MinVarMaxEV extends AbstractStrategy {
     private final LinkedMap<String, BigDecimal> weights;
 
     public MinVarMaxEV( final LinkedMap<LocalDate, List<Share>> trainingData,
-        final LinkedMap<String, ShareReturn> trainingDataYield, final double lambda ) throws Exception {
-        weights = calculateWeight(trainingData, trainingDataYield, lambda);
+        final LinkedMap<String, ShareReturn> trainingDataReturn, final double lambda ) throws Exception {
+        weights = calculateWeight(trainingData, trainingDataReturn, lambda);
     }
 
-    private final double[] calculateEV( final LinkedMap<String, ShareReturn> trainingDataYield ) {
-        final double[] retval = new double[trainingDataYield.size()];
+    private final double[] calculateEV( final LinkedMap<String, ShareReturn> trainingDataReturn ) {
+        final double[] retval = new double[trainingDataReturn.size()];
         int i = 0;
-        for ( final Map.Entry<String, ShareReturn> actual : trainingDataYield.entrySet() ) {
-            retval[i++] =
-                actual.getValue().getSumOfYield().divide(new BigDecimal(trainingDataYield.size()), RoundingMode.HALF_UP)
-                    .doubleValue();
+        for ( final Map.Entry<String, ShareReturn> actual : trainingDataReturn.entrySet() ) {
+            retval[i++] = actual.getValue().getSumOfReturn()
+                .divide(new BigDecimal(trainingDataReturn.size()), RoundingMode.HALF_UP).doubleValue();
         }
         return retval;
     }
 
     private LinkedMap<String, BigDecimal> calculateWeight( final LinkedMap<LocalDate, List<Share>> trainingData,
-        final LinkedMap<String, ShareReturn> trainingDataYield, final double lambda ) throws JOptimizerException {
+        final LinkedMap<String, ShareReturn> trainingDataReturn, final double lambda ) throws JOptimizerException {
         final LinkedMap<String, BigDecimal> retval = new LinkedMap<>();
 
         final RealMatrix covMatrix =
-            new Covariance(MatrixUtils.createRealMatrix(CovarianceHelper.getMatrixFromTrainingData(trainingData)))
+            new Covariance(MatrixUtils.createRealMatrix(StrategyHelper.getMatrixFromTrainingData(trainingData)))
                 .getCovarianceMatrix();
         final DoubleMatrix2D hMatrix = f2.make(covMatrix.getData());
 
-        final DoubleMatrix1D qVector = f1.make(calculateEV(trainingDataYield));
+        final DoubleMatrix1D qVector = f1.make(calculateEV(trainingDataReturn));
         final DoubleMatrix1D q = qVector.assign(Mult.mult(-lambda));
-        final DoubleMatrix2D p = hMatrix.assign(Mult.mult((1 - lambda))).assign(Mult.mult(2));
+        final DoubleMatrix2D p = hMatrix.assign(Mult.mult(2 * (1 - lambda)));
 
         final PDQuadraticMultivariateRealFunction objectiveFunction =
             new PDQuadraticMultivariateRealFunction(p.toArray(), q.toArray(), 0);
 
         //equalitites
-        final double[][] a = CovarianceHelper.createMatrix(hMatrix.rows());
+        final double[][] a = StrategyHelper.createMatrix(hMatrix.rows());
         final double[] b = new double[] { 1 };
 
         //inequalities
-        final ConvexMultivariateRealFunction[] inequalities = CovarianceHelper.createInequalities(hMatrix.rows());
+        final ConvexMultivariateRealFunction[] inequalities = StrategyHelper.createInequalities(hMatrix.rows());
 
         final OptimizationRequest oR = new OptimizationRequest();
         oR.setF0(objectiveFunction);

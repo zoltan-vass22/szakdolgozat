@@ -16,6 +16,6 @@ import java.math.BigDecimal;
 public class ShareReturn {
 
     private String name;
-    private BigDecimal sumOfYield;
+    private BigDecimal sumOfReturn;
 
 }

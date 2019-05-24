@@ -13,7 +13,7 @@ import org.apache.commons.collections4.map.LinkedMap;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.stat.correlation.Covariance;
-import utils.CovarianceHelper;
+import utils.StrategyHelper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -34,7 +34,7 @@ public class MinimumVariance extends AbstractStrategy {
         final LinkedMap<String, BigDecimal> retval = new LinkedMap<>();
 
         final RealMatrix covMatrix =
-            new Covariance(MatrixUtils.createRealMatrix(CovarianceHelper.getMatrixFromTrainingData(trainingData)))
+            new Covariance(MatrixUtils.createRealMatrix(StrategyHelper.getMatrixFromTrainingData(trainingData)))
                 .getCovarianceMatrix();
         final DoubleMatrix2D hMatrix = f2.make(covMatrix.getData());
 
@@ -42,11 +42,11 @@ public class MinimumVariance extends AbstractStrategy {
             new PDQuadraticMultivariateRealFunction(hMatrix.toArray(), null, 0);
 
         //equalitites
-        final double[][] a = CovarianceHelper.createMatrix(hMatrix.rows());
+        final double[][] a = StrategyHelper.createMatrix(hMatrix.rows());
         final double[] b = new double[] { 1 };
 
         //inequalities
-        final ConvexMultivariateRealFunction[] inequalities = CovarianceHelper.createInequalities(hMatrix.rows());
+        final ConvexMultivariateRealFunction[] inequalities = StrategyHelper.createInequalities(hMatrix.rows());
 
         final OptimizationRequest oR = new OptimizationRequest();
         oR.setF0(objectiveFunction);

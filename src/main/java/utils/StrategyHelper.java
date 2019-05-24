@@ -11,7 +11,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
-public final class CovarianceHelper {
+public final class StrategyHelper {
     public static ConvexMultivariateRealFunction[] createInequalities( final int size ) {
         final RealMatrix identity = MatrixUtils.createRealIdentityMatrix(size).scalarMultiply(-1D);
 
